@@ -3,6 +3,10 @@ package app;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -13,7 +17,7 @@ import javax.mail.internet.MimeMessage;
 import org.apache.xml.security.utils.JavaUtils;
 
 import com.google.api.services.gmail.Gmail;
-
+import model.keystore.KeyStoreReader;
 import util.Base64;
 import util.GzipUtil;
 import util.IVHelper;
@@ -25,7 +29,12 @@ public class WriteMailClient extends MailClient {
 	private static final String KEY_FILE = "./data/session.key";
 	private static final String IV1_FILE = "./data/iv1.bin";
 	private static final String IV2_FILE = "./data/iv2.bin";
-	
+	private static final String KEY_STORE_FILE="./data/usera.jks";
+	private static final String KEY_STORE_FILE1="./data/userb.jks";
+	private static final String KEY_STORE_PASSA= "usera";
+	private static final String KEY_STORE_ALIASA = "usera";
+	private static final String KEY_STORE_PASS_FOR_PRIVATE_KEYA = "usera";
+	private static KeyStoreReader keyStoreReader= new KeyStoreReader();
 	public static void main(String[] args) {
 		
         try {
@@ -79,6 +88,17 @@ public class WriteMailClient extends MailClient {
 			
         	MimeMessage mimeMessage = MailHelper.createMimeMessage(reciever, ciphersubjectStr, ciphertextStr);
         	MailWritter.sendMessage(service, "me", mimeMessage);
+        	
+        	//prosledjivanje fajla i lozinke za pristup
+    		KeyStore keyStore=keyStoreReader.readKeyStore(KEY_STORE_FILE,KEY_STORE_PASSA.toCharArray());
+    		//preuzimanje sertifikata za korisnikab i njegovog javnog kljuca
+    		Certificate certificateB=keyStoreReader.getCertificateFromKeyStore(keyStore, KEY_STORE_FILE1);
+    		PublicKey publicKey=keyStoreReader.getPublicKeyFromCertificate(certificateB);
+    		//enkripcija session kljuca javnim kljucem korisnika b
+    		
+    		
+    		
+    	
         	
         }catch (Exception e) {
         	e.printStackTrace();
