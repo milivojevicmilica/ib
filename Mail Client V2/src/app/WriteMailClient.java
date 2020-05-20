@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.cert.Certificate;
 
 import javax.crypto.Cipher;
@@ -34,6 +35,8 @@ public class WriteMailClient extends MailClient {
 	private static final String KEY_STORE_PASSA= "usera";
 	private static final String KEY_STORE_ALIASA = "usera";
 	private static final String KEY_STORE_PASS_FOR_PRIVATE_KEYA = "usera";
+	private static final String KEY_STORE_ALIASB= "userb";
+	private static final String KEY_STORE_PASS_FOR_PRIVATE_KEYB = "userb";
 	private static KeyStoreReader keyStoreReader= new KeyStoreReader();
 	public static void main(String[] args) {
 		
@@ -92,9 +95,16 @@ public class WriteMailClient extends MailClient {
         	//prosledjivanje fajla i lozinke za pristup
     		KeyStore keyStore=keyStoreReader.readKeyStore(KEY_STORE_FILE,KEY_STORE_PASSA.toCharArray());
     		//preuzimanje sertifikata za korisnikab i njegovog javnog kljuca
-    		Certificate certificateB=keyStoreReader.getCertificateFromKeyStore(keyStore, KEY_STORE_FILE1);
-    		PublicKey publicKey=keyStoreReader.getPublicKeyFromCertificate(certificateB);
+    		Certificate certificateB=keyStoreReader.getCertificateFromKeyStore(keyStore, KEY_STORE_ALIASB);
+    		PublicKey publicKeyB=keyStoreReader.getPublicKeyFromCertificate(certificateB);
     		//enkripcija session kljuca javnim kljucem korisnika b
+    		Cipher rsaCipherEnc = Cipher.getInstance("RSA/ECB/PKCS1Padding", "BC");
+    		//postavljamo da se enkriptuje tajnim kljucem
+    		rsaCipherEnc.init(Cipher.ENCRYPT_MODE, publicKeyB);
+    		//kriptovanje
+    		byte[] encodedSecretKey = rsaCipherEnc.doFinal(secretKey.getEncoded());
+    		System.out.println("Kriptovan secret key: " + Base64.encodeToString(encodedSecretKey));
+			
     		
     		
     		
