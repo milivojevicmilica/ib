@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStore.SecretKeyEntry;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +28,8 @@ import org.apache.xml.security.utils.JavaUtils;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
 
+import model.keystore.KeyStoreReader;
+import model.mailclient.MailBody;
 import support.MailHelper;
 import support.MailReader;
 import util.Base64;
@@ -35,6 +40,11 @@ public class ReadMailClient extends MailClient {
 	public static long PAGE_SIZE = 3;
 	public static boolean ONLY_FIRST_PAGE = true;
 	
+	private static KeyStoreReader keyStoreReader= new KeyStoreReader();
+	private static final String KEY_STORE_FILE1="./data/userb.jks";
+	private static final String KEY_STORE_PASS_FOR_PRIVATE_KEYB = "userb";
+	private static final String KEY_STORE_ALIASB= "userb";
+	private static final String KEY_STORE_PASSB= "userb";
 	private static final String KEY_FILE = "./data/session.key";
 	private static final String IV1_FILE = "./data/iv1.bin";
 	private static final String IV2_FILE = "./data/iv2.bin";
@@ -75,18 +85,40 @@ public class ReadMailClient extends MailClient {
 	    String answerStr = reader.readLine();
 	    Integer answer = Integer.parseInt(answerStr);
 	    
-		MimeMessage chosenMessage = mimeMessages.get(answer);
+	    MimeMessage chosenMessage=mimeMessages.get(answer);
+	    String content=chosenMessage.getContent().toString();
+	    String [] toCSV=content.split("\\s");
+	    System.out.println("\n csv \n:"+ toCSV[1]);
+	    MailBody mailBody=new MailBody(toCSV[1]);
+	    byte [] encodedSecretKey=mailBody.getEncKeyBytes();
 	    
+	    System.out.println("\n secret key :\n" +Base64.encodeToString(encodedSecretKey));
+	    
+	    //ucitavanje keystora
+	    KeyStore keyStore=keyStoreReader.readKeyStore(KEY_STORE_FILE1, KEY_STORE_PASSB.toCharArray());
+	    
+	    
+	    //ucitan privatekey koji ce se koristiti za dekripciju
+		PrivateKey privateKey=keyStoreReader.getPrivateKeyFromKeyStore(keyStore, KEY_STORE_ALIASB, KEY_STORE_PASS_FOR_PRIVATE_KEYB.toCharArray());
+		System.out.println("\n Privatan kljuc procitan\n"+privateKey);
         //TODO: Decrypt a message and decompress it. The private key is stored in a file.
-		Cipher aesCipherDec = Cipher.getInstance("AES/CBC/PKCS5Padding");
-		SecretKey secretKey = new SecretKeySpec(JavaUtils.getBytesFromFile(KEY_FILE), "AES");
+		Cipher rsaCipherDec = Cipher.getInstance("RSA/CBC/PKCS5Padding");
+		rsaCipherDec.init(Cipher.DECRYPT_MODE, privateKey);
+		
+		byte [] key=rsaCipherDec.doFinal(encodedSecretKey);
+		System.out.println("\n Ovo je kljuc\n"+key.toString());
+		
+		Cipher aesCipherDec=Cipher.getInstance("AES/CBC/PKC55PADDING");
+		SecretKey secretKey=new SecretKeySpec(key, "AES");
+		
+		//inicijalizacija i dekripcija
 		
 		
 		byte[] iv1 = JavaUtils.getBytesFromFile(IV1_FILE);
 		IvParameterSpec ivParameterSpec1 = new IvParameterSpec(iv1);
 		aesCipherDec.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec1);
 		
-		String str = MailHelper.getText(chosenMessage);
+		String str = toCSV[0];
 		byte[] bodyEnc = Base64.decode(str);
 		
 		String receivedBodyTxt = new String(aesCipherDec.doFinal(bodyEnc));

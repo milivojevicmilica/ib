@@ -10,6 +10,9 @@ public class MailBody {
 	private String encKey;
 	private String signature;
 	
+	public MailBody(){
+		
+	}
 	public MailBody(String encMessage, String iV1, String iV2, String encKey) {
 		super();
 		this.encMessage = encMessage;
@@ -17,6 +20,7 @@ public class MailBody {
 		this.IV2 = iV2;
 		this.encKey = encKey;
 	}
+	
 	
 	public MailBody(String encMessage, String iV1, String iV2, String encKey, String signature) {
 		super();
