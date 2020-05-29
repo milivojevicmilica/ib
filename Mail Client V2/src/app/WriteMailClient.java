@@ -4,9 +4,8 @@ package app;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.security.KeyStore;
-import java.security.PrivateKey;
+
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.security.Security;
 import java.security.cert.Certificate;
 
@@ -86,6 +85,8 @@ public class WriteMailClient extends MailClient {
 			String ciphersubjectStr = Base64.encodeToString(ciphersubject);
 			System.out.println("Kriptovan subject: " + ciphersubjectStr);
 			
+						
+			
 			//prosledjivanje fajla i lozinke za pristup
     		KeyStore keyStore=keyStoreReader.readKeyStore(KEY_STORE_FILE,KEY_STORE_PASSA.toCharArray());
     		//preuzimanje sertifikata za korisnikab i njegovog javnog kljuca
@@ -93,14 +94,15 @@ public class WriteMailClient extends MailClient {
     		System.out.println("\n Citanje sertifikata:\n"+certificateB);
     		PublicKey publicKeyB=keyStoreReader.getPublicKeyFromCertificate(certificateB);
     		System.out.println("\n Javni kljuc:\n"+ publicKeyB);
-    		//enkripcija session kljuca javnim kljucem korisnika b
+    		//enkripcija session kljuca javnim kljucem korisnika b i postavljen provajder
     		Security.addProvider(new BouncyCastleProvider());
-    		Cipher rsaCipherEnc = Cipher.getInstance("RSA/ECB/PKCS1Padding", "BC");
+    		
+    		Cipher rsaCipherEnc = Cipher.getInstance("RSA/ECB/PKCS1Padding","BC");
     		//postavljamo da se enkriptuje tajnim kljucem
     		rsaCipherEnc.init(Cipher.ENCRYPT_MODE, publicKeyB);
     		//kriptovanje
     		byte[] encodedSecretKey = rsaCipherEnc.doFinal(secretKey.getEncoded());
-    		System.out.println("Kriptovan secret key: " + Base64.encodeToString(encodedSecretKey));
+    		System.out.println("Kriptovan secret key: " + encodedSecretKey);
 			
     		
 			

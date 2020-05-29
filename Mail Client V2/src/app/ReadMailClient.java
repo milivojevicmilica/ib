@@ -9,6 +9,7 @@ import java.security.KeyStore;
 import java.security.KeyStore.SecretKeyEntry;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import org.apache.xml.security.utils.JavaUtils;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
@@ -102,13 +104,14 @@ public class ReadMailClient extends MailClient {
 		PrivateKey privateKey=keyStoreReader.getPrivateKeyFromKeyStore(keyStore, KEY_STORE_ALIASB, KEY_STORE_PASS_FOR_PRIVATE_KEYB.toCharArray());
 		System.out.println("\n Privatan kljuc procitan\n"+privateKey);
         //TODO: Decrypt a message and decompress it. The private key is stored in a file.
-		Cipher rsaCipherDec = Cipher.getInstance("RSA/CBC/PKCS5Padding");
+		Security.addProvider(new BouncyCastleProvider());
+		Cipher rsaCipherDec = Cipher.getInstance("RSA/EBC/PKCS1Padding");
 		rsaCipherDec.init(Cipher.DECRYPT_MODE, privateKey);
 		
 		byte [] key=rsaCipherDec.doFinal(encodedSecretKey);
 		System.out.println("\n Ovo je kljuc\n"+key.toString());
 		
-		Cipher aesCipherDec=Cipher.getInstance("AES/CBC/PKC55PADDING");
+		Cipher aesCipherDec=Cipher.getInstance("AES/CBC/PKCS5Padding");
 		SecretKey secretKey=new SecretKeySpec(key, "AES");
 		
 		//inicijalizacija i dekripcija
