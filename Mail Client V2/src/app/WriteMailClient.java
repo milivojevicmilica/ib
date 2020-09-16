@@ -2,6 +2,7 @@ package app;
 
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.security.KeyStore;
 
@@ -14,6 +15,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.mail.internet.MimeMessage;
+import javax.sound.midi.Receiver;
 
 import org.apache.xml.security.utils.JavaUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -26,6 +28,7 @@ import util.GzipUtil;
 import util.IVHelper;
 import support.MailHelper;
 import support.MailWritter;
+
 
 public class WriteMailClient extends MailClient {
 
@@ -60,6 +63,9 @@ public class WriteMailClient extends MailClient {
             //Compression
             String compressedSubject = Base64.encodeToString(GzipUtil.compress(subject));
             String compressedBody = Base64.encodeToString(GzipUtil.compress(body));
+            
+            
+            
             
             //Key generation
             KeyGenerator keyGen = KeyGenerator.getInstance("AES"); 
@@ -112,7 +118,7 @@ public class WriteMailClient extends MailClient {
 			JavaUtils.writeBytesToFilename(IV2_FILE, ivParameterSpec2.getIV());
 			
 			//presnosenje enkriptovanog tajnog kljuca u okviru tela bodija
-    		MailBody mailBody= new MailBody(ciphertext,ivParameterSpec1.getIV(),ivParameterSpec2.getIV(),encodedSecretKey);
+			MailBody mailBody= new MailBody(ciphertext,ivParameterSpec1.getIV(),ivParameterSpec2.getIV(),encodedSecretKey);
     		String csv=mailBody.toCSV();
     		
     		System.out.println(">>>"+ciphertextStr+" "+csv);

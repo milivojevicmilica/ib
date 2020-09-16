@@ -105,7 +105,7 @@ public class ReadMailClient extends MailClient {
 		System.out.println("\n Privatan kljuc procitan\n"+privateKey);
         //TODO: Decrypt a message and decompress it. The private key is stored in a file.
 		Security.addProvider(new BouncyCastleProvider());
-		Cipher rsaCipherDec = Cipher.getInstance("RSA/EBC/PKCS1Padding");
+		Cipher rsaCipherDec = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 		rsaCipherDec.init(Cipher.DECRYPT_MODE, privateKey);
 		
 		byte [] key=rsaCipherDec.doFinal(encodedSecretKey);
