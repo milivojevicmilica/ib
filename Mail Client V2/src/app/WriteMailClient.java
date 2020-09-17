@@ -3,6 +3,7 @@ package app;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.security.KeyStore;
 
@@ -14,11 +15,23 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
+import javax.lang.model.element.Element;
 import javax.mail.internet.MimeMessage;
 import javax.sound.midi.Receiver;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
+import org.apache.xml.security.encryption.EncryptedData;
+import org.apache.xml.security.encryption.XMLCipher;
+import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.utils.JavaUtils;
+import org.bouncycastle.asn1.crmf.EncryptedKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.w3c.dom.Document;
 
 import com.google.api.services.gmail.Gmail;
 import model.keystore.KeyStoreReader;
@@ -26,15 +39,15 @@ import model.mailclient.MailBody;
 import util.Base64;
 import util.GzipUtil;
 import util.IVHelper;
+import xml.signature.SignEnveloped;
 import support.MailHelper;
 import support.MailWritter;
+import support.XML;
 
 
 public class WriteMailClient extends MailClient {
 
-	private static final String KEY_FILE = "./data/session.key";
-	private static final String IV1_FILE = "./data/iv1.bin";
-	private static final String IV2_FILE = "./data/iv2.bin";
+	
 	private static final String KEY_STORE_FILE="./data/usera.jks";
 	private static final String KEY_STORE_FILE1="./data/userb.jks";
 	private static final String KEY_STORE_PASSA= "usera";
@@ -42,98 +55,110 @@ public class WriteMailClient extends MailClient {
 	private static final String KEY_STORE_PASS_FOR_PRIVATE_KEYA = "usera";
 	private static final String KEY_STORE_ALIASB= "userb";
 	private static final String KEY_STORE_PASS_FOR_PRIVATE_KEYB = "userb";
-	private static KeyStoreReader keyStoreReader= new KeyStoreReader();
+	private static final String OUT_FILE = "./data/mail.xml";
+	private static final String OUT_FILE2 = "./data/mail_signed.xml";
+	
 	public static void main(String[] args) {
 		
-        try {
-        	Gmail service = getGmailService();
-            
-        	System.out.println("Insert a reciever:");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            String reciever = reader.readLine();
-        	
-            System.out.println("Insert a subject:");
-            String subject = reader.readLine();
-            
-            
-            System.out.println("Insert body:");
-            String body = reader.readLine();
-            
-            
-            //Compression
-            String compressedSubject = Base64.encodeToString(GzipUtil.compress(subject));
-            String compressedBody = Base64.encodeToString(GzipUtil.compress(body));
-            
-            
-            
-            
-            //Key generation
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES"); 
-			SecretKey secretKey = keyGen.generateKey();
-			Cipher aesCipherEnc = Cipher.getInstance("AES/CBC/PKCS5Padding");
-			
-			//inicijalizacija za sifrovanje 
-			IvParameterSpec ivParameterSpec1 = IVHelper.createIV();
-			aesCipherEnc.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec1);
-			
-			
-			//sifrovanje
-			byte[] ciphertext = aesCipherEnc.doFinal(compressedBody.getBytes());
-			String ciphertextStr = Base64.encodeToString(ciphertext);
-			System.out.println("Kriptovan tekst: " + ciphertextStr);
-			
-			
-			//inicijalizacija za sifrovanje 
-			IvParameterSpec ivParameterSpec2 = IVHelper.createIV();
-			aesCipherEnc.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec2);
-			
-			byte[] ciphersubject = aesCipherEnc.doFinal(compressedSubject.getBytes());
-			String ciphersubjectStr = Base64.encodeToString(ciphersubject);
-			System.out.println("Kriptovan subject: " + ciphersubjectStr);
-			
-						
-			
-			//prosledjivanje fajla i lozinke za pristup
-    		KeyStore keyStore=keyStoreReader.readKeyStore(KEY_STORE_FILE,KEY_STORE_PASSA.toCharArray());
-    		//preuzimanje sertifikata za korisnikab i njegovog javnog kljuca
-    		Certificate certificateB=keyStoreReader.getCertificateFromKeyStore(keyStore, KEY_STORE_ALIASB);
-    		System.out.println("\n Citanje sertifikata:\n"+certificateB);
-    		PublicKey publicKeyB=keyStoreReader.getPublicKeyFromCertificate(certificateB);
-    		System.out.println("\n Javni kljuc:\n"+ publicKeyB);
-    		//enkripcija session kljuca javnim kljucem korisnika b i postavljen provajder
-    		Security.addProvider(new BouncyCastleProvider());
+       
+    		try {
+    			Gmail service = getGmailService();
+
+    			System.out.println("Insert a reciever:");
+    			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+    			String reciever = reader.readLine();
+
+    			System.out.println("Insert a subject:");
+    			String subject = reader.readLine();
+
+    			System.out.println("Insert body:");
+    			String body = reader.readLine();
+    			
+    			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+    			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+    			Document doc = docBuilder.newDocument();
+    			org.w3c.dom.Element mail = doc.createElement("mail");
+    			doc.appendChild(mail);
+    			org.w3c.dom.Element  title= doc.createElement("title");
+    			mail.setTextContent(subject);
+    			mail.appendChild(title);
+    			org.w3c.dom.Element text = doc.createElement("body");
+    			mail.setTextContent(body);
+    			mail.appendChild(text);
+    			
+    			
+    			
+    			TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    			   Transformer transformer = transformerFactory.newTransformer();
+    			   DOMSource source = new DOMSource(doc);
+    			   StreamResult result = new StreamResult(new File("./data/XML/mail.xml"));
+    			   transformer.transform(source, result);  
+
+    			   System.out.println("File created successfully");
+
+    			
+    			
+    			
+    			SignEnveloped.signDocument(doc);
+    			SignEnveloped.saveDocument(doc,OUT_FILE2);
+    			
+    			SecretKey secretKey = KeyStoreReader.generateSessionKey();
+    			PublicKey publicKey = KeyStoreReader.getPublicKey("./data/userb.jks", "userb", "userb", "userb");
+
+    			XMLCipher xmlCipher = XMLCipher.getInstance(XMLCipher.AES_128);
+    			xmlCipher.init(XMLCipher.ENCRYPT_MODE, secretKey);
+
+    			XMLCipher keyCipher = XMLCipher.getInstance(XMLCipher.RSA_v1dot5);
+    			keyCipher.init(XMLCipher.WRAP_MODE, publicKey);
     		
-    		Cipher rsaCipherEnc = Cipher.getInstance("RSA/ECB/PKCS1Padding","BC");
-    		//postavljamo da se enkriptuje tajnim kljucem
-    		rsaCipherEnc.init(Cipher.ENCRYPT_MODE, publicKeyB);
-    		//kriptovanje
-    		byte[] encodedSecretKey = rsaCipherEnc.doFinal(secretKey.getEncoded());
-    		System.out.println("Kriptovan secret key: " + encodedSecretKey);
-			
+    			org.apache.xml.security.encryption.EncryptedKey encryptedKey = keyCipher.encryptKey(doc, secretKey);
+    			System.out.println("Kriptovan tajni kljuc: " + encryptedKey);
+    			
+    			KeyInfo keyInfo = new KeyInfo(doc);
+    			keyInfo.addKeyName("Kriptovani tajni kljuc");
+    			keyInfo.add(encryptedKey);		
     		
-			
-			//snimaju se bajtovi kljuca i IV.
-			JavaUtils.writeBytesToFilename(KEY_FILE, secretKey.getEncoded());
-			JavaUtils.writeBytesToFilename(IV1_FILE, ivParameterSpec1.getIV());
-			JavaUtils.writeBytesToFilename(IV2_FILE, ivParameterSpec2.getIV());
-			
-			//presnosenje enkriptovanog tajnog kljuca u okviru tela bodija
-			MailBody mailBody= new MailBody(ciphertext,ivParameterSpec1.getIV(),ivParameterSpec2.getIV(),encodedSecretKey);
-    		String csv=mailBody.toCSV();
-    		
-    		System.out.println(">>>"+ciphertextStr+" "+csv);
-			
-        	MimeMessage mimeMessage = MailHelper.createMimeMessage(reciever, ciphersubjectStr, ciphertextStr+" "+csv);
-        	MailWritter.sendMessage(service, "me", mimeMessage);
-        	
-        	
+    			EncryptedData encryptedData = xmlCipher.getEncryptedData();
+    			encryptedData.setKeyInfo(keyInfo);
+    			
+    			xmlCipher.doFinal(doc,mail, true);
+
+    			String encryptedXml = XML.DocumentToString(doc);
+    			System.out.println("Mail posle enkripcije: " + encryptedXml);
+
+    			MimeMessage mimeMessage = MailHelper.createMimeMessage(reciever, encryptedXml);
+    			MailWritter.sendMessage(service, "me", mimeMessage);
+    			saveDocument(doc, OUT_FILE);
+    		}
+    			
+    			
+    		catch(Exception e) {
+    				e.printStackTrace();
+    			
+    		}
+
+   
+    			
     		
     		
     		
-    	
-        	
-        }catch (Exception e) {
-        	e.printStackTrace();
-		}
+    	}public static void saveDocument(Document doc, String fileName) {
+    		try {
+    			File outFile = new File(fileName);
+    			FileOutputStream f = new FileOutputStream(outFile);
+
+    			TransformerFactory factory = TransformerFactory.newInstance();
+    			Transformer transformer = factory.newTransformer();
+
+    			DOMSource source = new DOMSource(doc);
+    			StreamResult result = new StreamResult(f);
+
+    			transformer.transform(source, result);
+
+    			f.close();
+
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
 	}
 }
