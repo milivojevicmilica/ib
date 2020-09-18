@@ -113,12 +113,12 @@ public class ReadMailClient extends MailClient {
 			xmlCipher.doFinal(doc, encData); 
 			System.out.println("Verified: " + SignEnveloped.verifySignature(doc));
 			
-			String msg = doc.getElementsByTagName("mail").item(0).getTextContent();
-			String title = doc.getElementsByTagName("title").item(0).getTextContent();
+			String msg = doc.getElementsByTagName("body").item(0).getTextContent();
+			String title = doc.getElementsByTagName("subject").item(0).getTextContent();
 			
 			System.out.println("Body text: " + (msg.split("\n"))[0]);
 
-			System.out.println("Title: " + (msg.split("\n"))[0]);
+			System.out.println("Title: " + (title.split("\n"))[0]);
 			
 	}
 }

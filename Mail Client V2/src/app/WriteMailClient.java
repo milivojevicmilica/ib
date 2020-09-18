@@ -5,11 +5,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
-import java.security.KeyStore;
-
 import java.security.PublicKey;
-import java.security.Security;
-import java.security.cert.Certificate;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -77,30 +73,23 @@ public class WriteMailClient extends MailClient {
     			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
     			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
     			Document doc = docBuilder.newDocument();
-    			org.w3c.dom.Element mail = doc.createElement("mail");
-    			doc.appendChild(mail);
-    			org.w3c.dom.Element  title= doc.createElement("title");
-    			mail.setTextContent(subject);
-    			mail.appendChild(title);
-    			org.w3c.dom.Element text = doc.createElement("body");
-    			mail.setTextContent(body);
-    			mail.appendChild(text);
-    			
-    			
-    			
-    			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    			   Transformer transformer = transformerFactory.newTransformer();
-    			   DOMSource source = new DOMSource(doc);
-    			   StreamResult result = new StreamResult(new File("./data/XML/mail.xml"));
-    			   transformer.transform(source, result);  
+    			org.w3c.dom.Element rootElement = doc.createElement("mail");
 
-    			   System.out.println("File created successfully");
-
+    			org.w3c.dom.Element subjectElement = doc.createElement("subject");
+    			subjectElement.setTextContent(subject);
+    			rootElement.appendChild(subjectElement);
     			
+    			org.w3c.dom.Element bodyElement = doc.createElement("body");
+    			bodyElement.setTextContent(body);
+    			rootElement.appendChild(bodyElement);
+    			
+    			
+    			
+    			doc.appendChild(rootElement);
     			
     			
     			SignEnveloped.signDocument(doc);
-    			SignEnveloped.saveDocument(doc,OUT_FILE2);
+    			
     			
     			SecretKey secretKey = KeyStoreReader.generateSessionKey();
     			PublicKey publicKey = KeyStoreReader.getPublicKey("./data/userb.jks", "userb", "userb", "userb");
@@ -121,12 +110,12 @@ public class WriteMailClient extends MailClient {
     			EncryptedData encryptedData = xmlCipher.getEncryptedData();
     			encryptedData.setKeyInfo(keyInfo);
     			
-    			xmlCipher.doFinal(doc,mail, true);
+    			xmlCipher.doFinal(doc,rootElement, true);
 
     			String encryptedXml = XML.DocumentToString(doc);
     			System.out.println("Mail posle enkripcije: " + encryptedXml);
 
-    			MimeMessage mimeMessage = MailHelper.createMimeMessage(reciever, encryptedXml);
+    			MimeMessage mimeMessage = MailHelper.createMimeMessage(reciever,"Encrypted text", encryptedXml);
     			MailWritter.sendMessage(service, "me", mimeMessage);
     			saveDocument(doc, OUT_FILE);
     		}

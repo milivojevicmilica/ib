@@ -56,13 +56,14 @@ public class MailHelper {
         return null;
     }
     
-    public static MimeMessage createMimeMessage(String reciever, String  body) throws MessagingException {
+ public static MimeMessage createMimeMessage(String reciever,String subject, String  body) throws MessagingException {
     	
     	Properties props = new Properties();
 	    Session session = Session.getDefaultInstance(props, null);
     	MimeMessage message = new MimeMessage(session);
     	
     	message.setRecipient(Message.RecipientType.TO, new InternetAddress(reciever));
+    	message.setSubject(subject);
     	message.setText(body);
     	
     	return message;
