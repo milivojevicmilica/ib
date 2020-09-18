@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><mail>neki body<body/><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><mail><subject>neki subject</subject><body>neki txt</body><ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
 <ds:SignedInfo>
 <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
 <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
@@ -8,15 +8,15 @@
 <ds:Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315#WithComments"/>
 </ds:Transforms>
 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
-<ds:DigestValue>O0wnfGV0xmMmbTmx9s81j/JX/Lw=</ds:DigestValue>
+<ds:DigestValue>VVD3Sj8CaA4AhC/EwBvcOnuOen0=</ds:DigestValue>
 </ds:Reference>
 </ds:SignedInfo>
 <ds:SignatureValue>
-ZKT/NOuxtBhnZHi7xXrmePF1Z+O2+MNbmOMWEU4NAHpwOO3X2Bwhy+WEYFHlDPAcQlbftLdlKPKU
-JZGBUrUEVNr8dizHqQG12AOTNU7uqWsmK8/++Kyn2t3eFdp806vie8wK7jBZFzVH/5OYxM1sUgDk
-y2Cy9NzbUJuYm2Nz6k8SXrNMYYjKnZYEP+G0Y6oTPKa7nqc2buFQDIhCgFSC33GLS/irimY6yvPU
-+Gr+B1M8KPNwJHewS49qbcwhkTYIeVM8MBTojJnaa2hRL9s3pkYI9uxrUPtdKh6HPXoIkZ65G0UR
-4dqljKNY0fD7aaXbkl3sxbMEhuYfuDlE5vbzew==
+MtAmhAkwCoYtIEbDTuUpI3rnb3gwVeJtfPPv37M//OQyJS7Lbdfnp1Vja4OGH2YqXXw8tT8UPgJj
+aYEgRfePNN9pGmEMx0iWBiqkxnFcBMvY0Yh3G6tECz+cJTJFDd0QVV1TXmZCUCPO5hIbYBHwSQmN
+vp8yZdVyoIlXCLbpuVIRf9/TLNT01e0NLYaoryC0ew17OZdKs0iXkHQANZT/EqmhbLExs+ItJfBv
+ElA0Ywzs6KOWTmlq5XSpXM89ZTyBvgP34f8Z1nf54OhGt1xktOkekUY+hD241dLo1IitGzFK0Peq
+KmlFTF0NKgpgt3pYoXHapbLCvEiovsWkDyF6hg==
 </ds:SignatureValue>
 <ds:KeyInfo>
 <ds:KeyValue>

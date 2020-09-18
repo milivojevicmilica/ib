@@ -86,10 +86,17 @@ public class WriteMailClient extends MailClient {
     			
     			
     			doc.appendChild(rootElement);
-    			
+    			TransformerFactory transformerFactory =  TransformerFactory.newInstance();
+    		    Transformer transformer = transformerFactory.newTransformer();
+    		    DOMSource source = new DOMSource(doc);
+
+    		    StreamResult result =  new StreamResult(new File("./data/XML/mail.xml"));
+    		    transformer.transform(source, result);
+
+    		    System.out.println("Done");
     			
     			SignEnveloped.signDocument(doc);
-    			
+    			SignEnveloped.saveDocument(doc,OUT_FILE2);
     			
     			SecretKey secretKey = KeyStoreReader.generateSessionKey();
     			PublicKey publicKey = KeyStoreReader.getPublicKey("./data/userb.jks", "userb", "userb", "userb");
